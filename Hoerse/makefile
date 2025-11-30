@@ -1,6 +1,6 @@
-run: obj/Trojan.o obj/confirm.o obj/opnPrt.o obj/mainMenu.o obj/rs.o
+run: obj/Trojan.o obj/confirm.o obj/mainMenu.o obj/rs.o
 	@mkdir -p bin
-	gcc obj/Trojan.o obj/confirm.o obj/opnPrt.o obj/mainMenu.o obj/rs.o -o ./bin/run
+	gcc obj/Trojan.o obj/confirm.o obj/mainMenu.o obj/rs.o -o ./bin/run
 	
 
 
@@ -12,9 +12,6 @@ obj/Trojan.o: src/Trojan.c inc/headers.h
 obj/confirm.o: src/confirm.c inc/headers.h
 	gcc -I inc/ -c src/confirm.c -o obj/confirm.o
 	
-obj/opnPrt.o: src/opnPrt.c inc/headers.h
-	gcc -I inc/ -c src/opnPrt.c -o obj/opnPrt.o
-
 obj/mainMenu.o: src/mainMenu.c inc/headers.h
 	gcc -I inc/ -c src/mainMenu.c -o obj/mainMenu.o
 	

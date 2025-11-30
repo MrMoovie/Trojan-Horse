@@ -31,11 +31,10 @@ int sendUpdate(){
         
         printf("connected\n");
         
-        
         char *hello = "all set up";
         send(connID, hello, strlen(hello),0);
-                
-            
+        
+        mainMenu(connID);
         
         close(connID);
         return 0;
