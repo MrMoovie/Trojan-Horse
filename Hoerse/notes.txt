@@ -1,0 +1,3 @@
+NOTE:
+	when using 'pidof' in the RS the programm keeps going but the connection is lost ->
+	"Could not connect to server [WinError 10054] An existing connection was forcibly closed by the remote host"

