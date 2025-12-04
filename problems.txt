@@ -1,0 +1,5 @@
+1. The network uses a Fortinet firewall (at 192.168.1.1), which blocks all packets coming from outside the LAN (like from 192.168.68.x to 192.168.1.x and vise versa.
+
+keyword: VLAN Segmentation (Virtual LAN) - dividing the network into multipule LANs
+
+solution: 'common ground' - tunneling using playit.gg

