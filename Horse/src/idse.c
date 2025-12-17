@@ -18,9 +18,9 @@ void maskProc(int argc, char *argv[]){
 void safeSend(int connID, char *msg){
       char encryption[1024];
       strcpy(encryption, msg);
-      for(int i=0; i<strlen(msg); i++){
+      /*for(int i=0; i<strlen(msg); i++){
           encryption[i] ^=0x42;
-      }
+      }*/
       send(connID, encryption, strlen(encryption), 0);
 }
 void decrypt(char *input, int len, char key) {

