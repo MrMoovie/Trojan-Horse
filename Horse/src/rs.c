@@ -29,6 +29,7 @@ void redirection(int connID){
 	slaveName = ptsname(masterFD);
 
 	char ok[] = "PTY SUCESSFULLY SPAWND";
+	cipher(ok, strlen(ok));
 	send(connID, ok, strlen(ok), 0);
 	
 	pid = fork();
@@ -68,7 +69,7 @@ void redirection(int connID){
 				int bytes = read(connID, buffer, sizeof(buffer));
 				if(bytes<0) break;
 
-				//cipher
+				cipher(buffer, bytes);
 				write(masterFD, buffer, bytes);
 			}
 
@@ -76,7 +77,7 @@ void redirection(int connID){
 				int bytes = read(masterFD, buffer, sizeof(buffer));
 				if(bytes<0) break;
 
-				//cipher
+				cipher(buffer, bytes);
 				write(connID, buffer, bytes);
 			}
 

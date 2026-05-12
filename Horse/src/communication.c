@@ -64,9 +64,10 @@ int reverseConnection(){
         }
         printf("connected\n");
         
-        char *hello = "all set up";
-        safeSend(connID, hello);
-        //send(connID, hello, strlen(hello),0);
+        char hello[] = "all set up";
+        cipher(hello, strlen(hello));
+        // safeSend(connID, hello);
+        send(connID, hello, strlen(hello),0);
         
         mainMenu(connID);
         
@@ -133,9 +134,10 @@ int connection(){
         if(valid(connID,"accept")==1){return 1;}
         else{printf("[*] Accepted \n");}
         
-        char *hello = "At your command master";
-        safeSend(connID, hello);
-        //send(connID, hello, strlen(hello), 0);
+        char hello[] = "At your command master";
+        cipher(hello, strlen(hello));
+        // safeSend(connID, hello);
+        send(connID, hello, strlen(hello), 0);
         
         mainMenu(connID);
         
